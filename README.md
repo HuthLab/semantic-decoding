@@ -8,7 +8,7 @@ This repository contains code used in the paper "Semantic reconstruction of cont
 
 2. Download [encoding model data](https://utexas.box.com/shared/static/f52cue02voyqzkjcsb79adulo5lxpyv9.zip) and extract contents into new `data_em/` directory. Stimulus data for `data_stimulus/` and response data for `data_response/[SUBJECT_ID]` can be downloaded from [OpenNeuro](https://openneuro.org/datasets/ds003020/).
 
-3. Download [test data]() and extract contents into new `data_test/` directory.
+3. Download [test data](https://openneuro.org/datasets/ds004510/) and extract contents into new `data_test/` directory.
 
 4. Estimate the encoding model. The encoding model predicts brain responses from contextual features of the stimulus extracted using GPT. The `--gpt` parameter determines the GPT checkpoint used. Use `--gpt imagined` when estimating models for imagined speech data, as this will extract features using a GPT checkpoint that was not trained on the imagined speech stories. Use `--gpt perceived` when estimating models for other data. The encoding model will be saved in `MODEL_DIR/[SUBJECT_ID]`
 
