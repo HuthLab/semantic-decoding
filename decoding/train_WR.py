@@ -15,7 +15,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--subject", type = str, required = True)
     parser.add_argument("--sessions", nargs = "+", type = int, 
-        default = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 17, 19])
+        default = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 18, 20])
     args = parser.parse_args()
 
     # training stories
@@ -44,9 +44,9 @@ if __name__ == "__main__":
     mean_rate = np.mean(nz_rate)
     rate = nz_rate - mean_rate
     
-    resp = get_resp(args.subject, stories, stack = True)
     for roi in ["speech", "auditory"]:
-        delresp = make_delayed(resp[:, vox[roi]], config.RESP_DELAYS)
+        resp = get_resp(args.subject, stories, stack = True, vox = vox[roi])
+        delresp = make_delayed(resp, config.RESP_DELAYS)
         nchunks = int(np.ceil(delresp.shape[0] / 5 / config.CHUNKLEN))    
         weights, _, _ = bootstrap_ridge(delresp, rate, use_corr = False,
             alphas = config.ALPHAS, nboots = config.NBOOTS, chunklen = config.CHUNKLEN, nchunks = nchunks)
