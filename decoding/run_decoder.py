@@ -16,40 +16,48 @@ from utils_stim import predict_word_rate, predict_word_times
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--subject", type = str, required = True)
-    parser.add_argument("--scan", type = str, required = True)
-    parser.add_argument("--gpt", type = str, default = "perceived")
-    parser.add_argument("--word_rate", type = str, default = "auditory")
+    parser.add_argument("--experiment", type = str, required = True)
+    parser.add_argument("--task", type = str, required = True)
     args = parser.parse_args()
     
+    # determine GPT checkpoint based on experiment
+    if args.experiment in ["imagined_speech"]: gpt_checkpoint = "imagined"
+    else: gpt_checkpoint = "perceived"
+
+    # determine word rate model voxels based on experiment
+    if args.experiment in ["imagined_speech", "perceived_movies"]: word_rate_voxels = "speech"
+    else: word_rate_voxels = "auditory"
+
     # load responses
-    hf = h5py.File(os.path.join(config.TEST_DATA_DIR, args.subject, args.scan), "r")
+    hf = h5py.File(os.path.join(config.DATA_TEST_DIR, "test_response", args.subject, args.experiment, args.task + ".hf5"), "r")
     resp = np.nan_to_num(hf["data"][:])
     hf.close()
     
     # load gpt
-    with open(os.path.join(config.LM_DATA_DIR, args.gpt, "vocab.json"), "r") as f:
+    with open(os.path.join(config.DATA_LM_DIR, gpt_checkpoint, "vocab.json"), "r") as f:
         gpt_vocab = json.load(f)
-    with open(os.path.join(config.LM_DATA_DIR, "decoder_vocab.json"), "r") as f:
+    with open(os.path.join(config.DATA_LM_DIR, "decoder_vocab.json"), "r") as f:
         decoder_vocab = json.load(f)
-    gpt = GPT(path = os.path.join(config.LM_DATA_DIR, args.gpt, "model"), vocab = gpt_vocab, device = config.GPT_DEVICE)
+    gpt = GPT(path = os.path.join(config.DATA_LM_DIR, gpt_checkpoint, "model"), vocab = gpt_vocab, device = config.GPT_DEVICE)
     features = LMFeatures(model = gpt, layer = config.GPT_LAYER, context_words = config.GPT_WORDS)
     lm = LanguageModel(gpt, decoder_vocab, nuc_mass = config.LM_MASS, nuc_ratio = config.LM_RATIO)
 
     # load models
     load_location = os.path.join(config.MODEL_DIR, args.subject)
-    word_rate_model = np.load(os.path.join(load_location, "word_rate_model_%s.npz" % args.word_rate), allow_pickle = True)
-    encoding_model = np.load(os.path.join(load_location, "encoding_model_%s.npz" % args.gpt))
+    word_rate_model = np.load(os.path.join(load_location, "word_rate_model_%s.npz" % word_rate_voxels), allow_pickle = True)
+    encoding_model = np.load(os.path.join(load_location, "encoding_model_%s.npz" % gpt_checkpoint))
     weights = encoding_model["weights"]
-    noise_model = encoding_model['noise_model']
+    noise_model = encoding_model["noise_model"]
     tr_stats = encoding_model["tr_stats"]
     word_stats = encoding_model["word_stats"]
     em = EncodingModel(resp, weights, encoding_model["voxels"], noise_model, device = config.EM_DEVICE)
     em.set_shrinkage(config.NM_ALPHA)
-    assert args.scan not in encoding_model["stories"]
+    assert args.task not in encoding_model["stories"]
     
     # predict word times
     word_rate = predict_word_rate(resp, word_rate_model["weights"], word_rate_model["voxels"], word_rate_model["mean_rate"])
-    word_times, tr_times = predict_word_times(word_rate, resp, starttime = -10)
+    if args.experiment == "perceived_speech": word_times, tr_times = predict_word_times(word_rate, resp, starttime = -10)
+    else: word_times, tr_times = predict_word_times(word_rate, resp, starttime = 0)
     lanczos_mat = get_lanczos_mat(word_times, tr_times)
 
     # decode responses
@@ -69,6 +77,8 @@ if __name__ == "__main__":
             local_extensions = [Hypothesis(parent = hyp, extension = x) for x in zip(nuc, logprobs, extend_embs)]
             decoder.add_extensions(local_extensions, likelihoods, nextensions)
         decoder.extend(verbose = False)
-    save_location = os.path.join(config.RESULT_DIR, args.subject)
+        
+    if args.experiment in ["perceived_movie", "perceived_multispeaker"]: decoder.word_times += 10
+    save_location = os.path.join(config.RESULT_DIR, args.subject, args.experiment)
     os.makedirs(save_location, exist_ok = True)
-    decoder.save(os.path.join(save_location, Path(args.scan).stem))
+    decoder.save(os.path.join(save_location, args.task))

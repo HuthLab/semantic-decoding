@@ -11,8 +11,8 @@ from utils_ridge.util import make_delayed
 def get_story_wordseqs(stories):
     """loads words and word times of stimulus stories
     """
-    grids = load_textgrids(stories, config.EM_DATA_DIR)
-    with open(os.path.join(config.EM_DATA_DIR, "respdict.json"), "r") as f:
+    grids = load_textgrids(stories, config.DATA_TRAIN_DIR)
+    with open(os.path.join(config.DATA_TRAIN_DIR, "respdict.json"), "r") as f:
         respdict = json.load(f)
     trfiles = load_simulated_trfiles(respdict)
     wordseqs = make_word_ds(grids, trfiles)

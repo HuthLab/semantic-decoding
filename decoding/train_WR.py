@@ -20,13 +20,13 @@ if __name__ == "__main__":
 
     # training stories
     stories = []
-    with open(os.path.join(config.EM_DATA_DIR, "sess_to_story.json"), "r") as f:
+    with open(os.path.join(config.DATA_TRAIN_DIR, "sess_to_story.json"), "r") as f:
         sess_to_story = json.load(f) 
     for sess in args.sessions:
         stories.extend(sess_to_story[str(sess)])
 
     # ROI voxels
-    with open(os.path.join(config.EM_DATA_DIR, "ROIs", "%s.json" % args.subject), "r") as f:
+    with open(os.path.join(config.DATA_TRAIN_DIR, "ROIs", "%s.json" % args.subject), "r") as f:
         vox = json.load(f)
             
     # estimate word rate model

@@ -21,15 +21,15 @@ if __name__ == "__main__":
 
     # training stories
     stories = []
-    with open(os.path.join(config.EM_DATA_DIR, "sess_to_story.json"), "r") as f:
+    with open(os.path.join(config.DATA_TRAIN_DIR, "sess_to_story.json"), "r") as f:
         sess_to_story = json.load(f) 
     for sess in args.sessions:
         stories.extend(sess_to_story[str(sess)])
 
     # load gpt
-    with open(os.path.join(config.LM_DATA_DIR, args.gpt, "vocab.json"), "r") as f:
+    with open(os.path.join(config.DATA_LM_DIR, args.gpt, "vocab.json"), "r") as f:
         gpt_vocab = json.load(f)
-    gpt = GPT(path = os.path.join(config.LM_DATA_DIR, args.gpt, "model"), vocab = gpt_vocab, device = config.GPT_DEVICE)
+    gpt = GPT(path = os.path.join(config.DATA_LM_DIR, args.gpt, "model"), vocab = gpt_vocab, device = config.GPT_DEVICE)
     features = LMFeatures(model = gpt, layer = config.GPT_LAYER, context_words = config.GPT_WORDS)
     
     # estimate encoding model
