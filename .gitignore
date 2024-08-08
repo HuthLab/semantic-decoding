@@ -10,3 +10,7 @@ results/
 __MACOSX
 __pycache__
 poetry.lock
+pyproject.toml
+tmp*.txt
+tmp/
+*.ipynb
